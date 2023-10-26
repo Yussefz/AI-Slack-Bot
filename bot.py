@@ -4,6 +4,11 @@ from pathlib import Path
 from dotenv import load_dotenv
 from flask import Flask , request , Response
 from slackeventsapi import SlackEventAdapter
+from langchain.utilities import SQLDatabase
+from langchain.llms import OpenAI
+from langchain_experimental.sql import SQLDatabaseChain
+from langchain.sql_database import SQLDatabase
+from langchain.chains import create_sql_query_chain
 
 #Accessing our environment variables
 env_path = Path('.')/'.env'
@@ -11,6 +16,12 @@ load_dotenv(dotenv_path=env_path)
 
 #Initiating the Flask webserver should be runnig on http://127.0.0.1:5000
 app = Flask(__name__)
+
+#Langchain database intiation
+db = SQLDatabase.from_uri("mysql+pymysql://admin:admin2023@youssef-db3.cotjmiz8lmbt.us-east-1.rds.amazonaws.com:3306/classicmodels")
+llm = OpenAI(temperature=0, verbose=True)
+db_chain = SQLDatabaseChain.from_llm(llm, db, verbose=True)
+print(f"final result : {db_chain.run('How many employees are there?')}")
 
 #Configuring the event adapter
 slack_event_adapter = SlackEventAdapter(os.environ['SIGNING_SECRET'],'/slack/events',app)
@@ -30,6 +41,7 @@ message_counts = {}
 
 @slack_event_adapter.on('message')
 def message(payload):
+    print(payload)
     event = payload.get('event',{})
     channel_id = event.get('channel')
     user_id = event.get('user')
@@ -39,6 +51,8 @@ def message(payload):
             message_counts[user_id] += 1
         else:
             message_counts[user_id] = 1
+        #print(f"final result : {db_chain.run('How many employees are there?')}")
+        client.chat_postMessage(channel=channel_id, text=f"{db_chain.run(text)}")
 
 
 @app.route('/message-count', methods=['POST'])
