@@ -18,7 +18,7 @@ load_dotenv(dotenv_path=env_path)
 app = Flask(__name__)
 
 #Langchain database intiation
-db = SQLDatabase.from_uri("mysql+pymysql://admin:admin2023@youssef-db3.cotjmiz8lmbt.us-east-1.rds.amazonaws.com:3306/classicmodels")
+db = SQLDatabase.from_uri("mysql+pymysql://user:password@host:port/dbname")
 llm = OpenAI(temperature=0, verbose=True)
 db_chain = SQLDatabaseChain.from_llm(llm, db, verbose=True)
 print(f"final result : {db_chain.run('How many employees are there?')}")
